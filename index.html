@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+
+    <head>
+        <meta charset="UTF-8">
+        <title>Badge Controller</title>
+    </head>
+
+    <body>
+        <button id="connectBtn">Connect</button>
+        <button id="statusBtn" disabled>Get Status</button>
+        <p id="connectionStatus">Not connected</p>
+        <pre id="output"></pre>
+
+        <script>
+            let port;
+            let writer;
+            let reader;
+
+            document.getElementById('connectBtn').addEventListener('click', async () => {
+            try {
+                port = await navigator.serial.requestPort();
+                await port.open({ baudRate: 115200 });
+                writer = port.writable.getWriter();
+                reader = port.readable.getReader();
+                document.getElementById('connectionStatus').textContent = 'Connected';
+                document.getElementById('statusBtn').disabled = false;
+            } catch (err) {
+                document.getElementById('connectionStatus').textContent = 'Connection failed: ' + err;
+            }
+            });
+
+            document.getElementById('statusBtn').addEventListener('click', async () => {
+            const encoder = new TextEncoder();
+            await writer.write(encoder.encode(JSON.stringify({ cmd: "get_status" }) + '\n'));
+
+            const decoder = new TextDecoder();
+            const { value } = await reader.read();
+            document.getElementById('output').textContent = decoder.decode(value);
+            });
+        </script>
+    </body>
+</html>
