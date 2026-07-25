@@ -1,24 +1,55 @@
 <!DOCTYPE html>
-<html lang="en">
 
+<html lang="en">
     <head>
         <meta charset="UTF-8">
         <title>Badge Controller</title>
+        <style>
+            body { font-family: sans-serif; max-width: 400px; margin: 40px auto; padding: 0 20px; }
+            button { padding: 10px 16px; margin: 4px 4px 4px 0; cursor: pointer; }
+            input[type="range"] { width: 100%; }
+            pre { background: #f0f0f0; padding: 10px; border-radius: 4px; }
+        </style>
     </head>
 
     <body>
-	<h1>Test</h1>
-	<p>mmsakksckskcmksclx</p>
-
+        <h2>Badge Controller</h2>
         <button id="connectBtn">Connect</button>
-        <button id="statusBtn" disabled>Get Status</button>
         <p id="connectionStatus">Not connected</p>
-        <pre id="output"></pre>
+
+        <h3>Effect</h3>
+        <button class="effectBtn" data-effect="Steady" disabled>Steady</button>
+        <button class="effectBtn" data-effect="Wave" disabled>Wave</button>
+        <button class="effectBtn" data-effect="Pulse" disabled>Pulse</button>
+
+        <h3>Brightness</h3>
+        <input type="range" id="brightnessSlider" min="0" max="255" value="255" disabled>
+        <span id="brightnessValue">255</span>
+
+        <h3>Status</h3>
+        <pre id="output">-</pre>
 
         <script>
-            let port;
-            let writer;
-            let reader;
+            let port, writer, reader;
+
+            async function sendCommand(obj) {
+            const encoder = new TextEncoder();
+            await writer.write(encoder.encode(JSON.stringify(obj) + '\n'));
+            }
+
+            async function readLine() {
+            const decoder = new TextDecoder();
+            const { value } = await reader.read();
+            return decoder.decode(value);
+            }
+
+            async function sendAndRefresh(obj) {
+            await sendCommand(obj);
+            await readLine(); // پیام تاییدی متنی رو می‌خونیم و دور می‌ریزیم
+            await sendCommand({ cmd: "get_status" });
+            const status = await readLine(); // این‌بار جواب تمیز JSON
+            document.getElementById('output').textContent = status;
+            }
 
             document.getElementById('connectBtn').addEventListener('click', async () => {
             try {
@@ -27,19 +58,21 @@
                 writer = port.writable.getWriter();
                 reader = port.readable.getReader();
                 document.getElementById('connectionStatus').textContent = 'Connected';
-                document.getElementById('statusBtn').disabled = false;
+                document.querySelectorAll('.effectBtn').forEach(btn => btn.disabled = false);
+                document.getElementById('brightnessSlider').disabled = false;
             } catch (err) {
                 document.getElementById('connectionStatus').textContent = 'Connection failed: ' + err;
             }
             });
 
-            document.getElementById('statusBtn').addEventListener('click', async () => {
-            const encoder = new TextEncoder();
-            await writer.write(encoder.encode(JSON.stringify({ cmd: "get_status" }) + '\n'));
+            document.querySelectorAll('.effectBtn').forEach(btn => {
+            btn.addEventListener('click', () => sendAndRefresh({ effect: btn.dataset.effect }));
+            });
 
-            const decoder = new TextDecoder();
-            const { value } = await reader.read();
-            document.getElementById('output').textContent = decoder.decode(value);
+            document.getElementById('brightnessSlider').addEventListener('change', () => {
+            const val = parseInt(document.getElementById('brightnessSlider').value);
+            document.getElementById('brightnessValue').textContent = val;
+            sendAndRefresh({ brightness: val });
             });
         </script>
     </body>
