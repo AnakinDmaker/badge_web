@@ -5,6 +5,8 @@ Browser-based controller for the smart badge — connects directly over USB usin
 ## Status
 ✅ Fully functional against firmware — connect, control, and disconnect all working
 
+![Status](https://img.shields.io/badge/status-working-brightgreen)
+
 ## Working Features
 - Connect/disconnect via WebSerial with graceful error handling
 - Live effect selection (steady / wave / pulse)
@@ -22,3 +24,7 @@ Chrome or Edge only (WebSerial is not supported in Safari or Firefox)
 ## Related repos
 - badge-pcb — hardware
 - badge-firmware — firmware this communicates with
+
+## License
+
+![License](https://img.shields.io/badge/license-MIT-blue)
