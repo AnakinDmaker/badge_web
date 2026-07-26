@@ -31,6 +31,54 @@ function handleDisconnect(message) {
   document.getElementById('disconnectBtn').disabled = true;
 }
 
+const ledPreview = document.getElementById('ledPreview');
+const ledDivs = [];
+for (let i = 0; i < 16; i++) {
+  const div = document.createElement('div');
+  div.style.width = '20px';
+  div.style.height = '20px';
+  div.style.borderRadius = '50%';
+  div.style.background = '#333';
+  ledPreview.appendChild(div);
+  ledDivs.push(div);
+}
+
+let animationFrame;
+function stopAnimation() {
+  if (animationFrame) cancelAnimationFrame(animationFrame);
+}
+
+function simulateSteady() {
+  stopAnimation();
+  ledDivs.forEach(div => div.style.background = 'rgb(255,120,0)');
+}
+
+function simulateWave() {
+  stopAnimation();
+  let t = 0;
+  function frame() {
+    ledDivs.forEach((div, i) => {
+      const brightness = (Math.sin(t + i * 0.4) + 1) / 2;
+      const val = Math.floor(brightness * 255);
+      div.style.background = `rgb(${val}, ${Math.floor(val * 0.47)}, 0)`;
+    });
+    t += 0.15;
+    animationFrame = requestAnimationFrame(frame);
+  }
+  frame();
+}
+
+function simulatePulse() {
+  stopAnimation();
+  let on = true;
+  function frame() {
+    ledDivs.forEach(div => div.style.background = on ? 'rgb(255,120,0)' : '#333');
+    on = !on;
+    setTimeout(() => { animationFrame = requestAnimationFrame(frame); }, 150);
+  }
+  frame();
+}
+
 document.getElementById('connectBtn').addEventListener('click', async () => {
   try {
     port = await navigator.serial.requestPort();
@@ -48,7 +96,12 @@ document.getElementById('connectBtn').addEventListener('click', async () => {
 });
 
 document.querySelectorAll('.effectBtn').forEach(btn => {
-  btn.addEventListener('click', () => sendAndRefresh({ effect: btn.dataset.effect }));
+  btn.addEventListener('click', () => {
+    sendAndRefresh({ effect: btn.dataset.effect });
+    if (btn.dataset.effect === 'Steady') simulateSteady();
+    if (btn.dataset.effect === 'Wave') simulateWave();
+    if (btn.dataset.effect === 'Pulse') simulatePulse();
+  });
 });
 
 document.getElementById('brightnessSlider').addEventListener('change', () => {
@@ -68,3 +121,4 @@ document.getElementById('disconnectBtn').addEventListener('click', async () => {
   }
   handleDisconnect('Not connected');
 });
+
