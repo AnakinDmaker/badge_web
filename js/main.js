@@ -97,6 +97,8 @@ document.getElementById('connectBtn').addEventListener('click', async () => {
 
 document.querySelectorAll('.effectBtn').forEach(btn => {
   btn.addEventListener('click', () => {
+    document.querySelectorAll('.effectBtn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
     sendAndRefresh({ effect: btn.dataset.effect });
     if (btn.dataset.effect === 'Steady') simulateSteady();
     if (btn.dataset.effect === 'Wave') simulateWave();
